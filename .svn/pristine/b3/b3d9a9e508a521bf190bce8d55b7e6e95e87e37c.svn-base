@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+  <html>
+  <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+      <title>title</title>
+      <link rel="stylesheet" type="text/css" href="../css/api.css"/>
+      <link rel="stylesheet" type="text/css" href="../css/aui.css"/>
+      <link rel="stylesheet" type="text/css" href="../css/dropload.css"/>
+      <style>
+      html,body{
+          height: 100%;
+          background-color: #f9f9f9;
+      }
+      .content-item{
+        display: flex;
+         flex-direction: row;
+         width:100%;
+         justify-content: space-between;
+          margin-bottom: 5px
+      }
+      .aui-list-item-inner{
+        display: flex;
+        flex-direction: column;
+        align-items:  flex-start;
+
+      }
+    .aui-list{
+      margin-top: 5px;
+      padding-top: 5px
+    }
+
+  </style>
+  </head>
+  <body>
+    <div class="aui-searchbar" id="search" style="padding-right:10px">
+       <div class="aui-searchbar-input aui-border-radius" tapmode >
+           <form action="javascript:search();">
+               <input type="search" placeholder="请选择日期" readonly style="width: 107%;"  id="search-input" onclick="fnSetBirthday()">
+           </form>
+       </div>
+       <div class="aui-searchbar-cancel" onclick="cente()" tapmod>取消</div>
+    </div>
+     <div id="scellContent">
+       <div class="aui-content aui-margin-b-15 my-search"  style="overflow:auto;background-color: #f9f9f9;height:100%" >
+         <ul class="aui-list aui-list-in" v-for="history in  historyList">
+             <li class="aui-list-item aui-list-item-middle content" >
+                 <div class="aui-list-item-inner" >
+                     <div class="content-item" style=" color:#888888;font-size:17px;" >
+                       <div style="font-size:14px">设备型号:{{history.phone_type}}</div>
+                        <div style="color:#999999;font-size:13px">操作人:{{history.imei}}</div>
+                     </div>
+                     <div  class="content-item" style="color:#999999;font-size:13px">
+                       <div>操作指令:{{history.operate_type}}</div>
+                        <div style="color:#999999;font-size:13px">结果:{{history.operate_result}}</div>
+                     </div>
+                    <div class="content-item" style="color:#999999;font-size:13px">操作时间:{{history.create_date |date-filter }}</div>
+                 </div>
+             </li>
+         </ul>
+     </div>
+   </div>
+  </body>
+  <script type="text/javascript" src="../script/api.js"></script>
+  <script type="text/javascript" src="../script/jquery.min.js"></script>
+  <script type="text/javascript" src="../script/dropload.min.js"></script>
+  <script type="text/javascript" src="../script/vue.js"></script>
+  <script type="text/javascript">
+    var load;
+    apiready = function(){
+    }
+    var historyVue=new Vue({
+      el:"#scellContent",
+      data:function(){
+        return {
+            historyList:[]
+        }
+      }
+    })
+
+    Vue.filter("date-filter",function(value){
+      value=value.replace("T","  ")
+      value=value.substr(0,value.lastIndexOf("."))
+      return  value
+    })
+
+    var page=0;
+    var pageSize=10;
+    /**
+    * 初始化分页信息
+    */  initRefresh();
+      function initRefresh(){
+        load=$('#scellContent').dropload({
+           scrollArea: window,
+           autoLoad:true,
+           domDown: {
+               domClass: "dropload-down",
+               domRefresh: '<div class="dropload-refresh">上拉加载更多</div>',
+               domLoad: '<div class="dropload-load"><span class="loading"></span>正在加载...</div>',
+               domNoData: '<div class="dropload-noData">暂无更多数据</div>'
+           },
+          loadDownFn:function(me){
+                  $.ajax({
+                      type: 'GET',
+                      url: 'http://192.168.2.104:8082/getOperateLog',
+                      data:{
+                        page:page,
+                        pageSize:pageSize,
+                        operateTime:document.getElementById('search-input').value
+                      },
+                      dataType: 'json',
+                      success: function(data){
+                          if(data.result.data.length>0){
+                            page=page+1;
+                            me.noData(false);
+                            me.unlock('down')
+                          }else{
+                            me.noData(true);
+                            me.lock('down')
+                          }
+                            historyVue.historyList=historyVue.historyList.concat(data.result.data)
+                            me.resetload();
+                      },
+                      error: function(xhr, type){
+                          me.resetload();
+                          me.noData(true);
+                          me.lock('down')
+                      }
+                  });
+              }
+        });
+      }
+    //日期选择
+    function fnSetBirthday() {
+            api.openPicker({
+                    type : 'date',
+                    date : new Date(),
+                    title : '请选择日期'
+            }, function(ret, err) {
+                  //console.log((ret.month+"").length)
+                  var month=ret.month;
+                  if((ret.month+"").length == 1){
+                    month=  "0"+ret.month
+                  }
+                  var day=ret.day;
+                  if((ret.day+"").length == 1){
+                    day=  "0"+ret.day
+                  }
+                    document.getElementById('search-input').value=ret.year + '-' + month + '-' + day
+                    page=0;
+                    $(".dropload-down").remove();
+                    historyVue.historyList=[]
+                    initRefresh();
+            });
+
+      };
+      function cente(){
+        document.getElementById('search-input').value=''
+        page=0;
+        $(".dropload-down").remove();
+        historyVue.historyList=[]
+        initRefresh();
+      }
+  </script>
+  </html>

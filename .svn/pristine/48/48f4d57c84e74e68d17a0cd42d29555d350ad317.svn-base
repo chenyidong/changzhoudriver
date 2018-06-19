@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
+    <title>title</title>
+    <link rel="stylesheet" type="text/css" href="../css/api.css" />
+    <link rel="stylesheet" type="text/css" href="../css/aui.css" />
+    <link rel="stylesheet" type="text/css" href="../css/dropload.css" />
+    <style>
+        html,
+        body {
+            height: 100%;
+            background-color: #f9f9f9;
+        }
+        
+        .content-item {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            justify-content: space-between;
+            margin-bottom: 5px
+        }
+        
+        .aui-list-item-inner {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .aui-list {
+            margin-top: 5px;
+            padding-top: 5px
+        }
+    </style>
+</head>
+
+<body>
+    <header class="aui-bar aui-bar-nav" id="aui-header" style="height: 60px;background-color:#FF3030">
+        <a class="aui-btn aui-pull-left" tapmode onclick="closeWin()" style="margin-top: 10px;">
+            <span class="aui-iconfont aui-icon-left" style="margin-top: 13px;"></span>
+        </a>
+        <div class="aui-title" style="margin-top: 15px;">操作记录</div>
+    </header>
+
+    </div>
+    </div>
+</body>
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript" src="../script/jquery.min.js"></script>
+<script type="text/javascript" src="../script/dropload.min.js"></script>
+<script type="text/javascript" src="../script/vue.js"></script>
+<script type="text/javascript" src="../script/server.js"></script>
+<script type="text/javascript">
+    var load;
+    apiready = function() {
+        var header = $api.byId('aui-header'); // 获取头部
+        var pos = $api.offset(header); // 获取位置数据
+        api.openFrame({ // 打开Frame
+            name: 'historyList',
+            url: 'historyList.html',
+            rect: {
+                x: 0,
+                y: pos.h, // 头部留位置
+                w: 'auto',
+                h: 'auto'
+            },
+            bounces: false,
+            vScrollBarEnabled: false
+        });
+    }
+
+    function closeWin() {
+        api.closeWin({});
+    }
+</script>
+
+</html>

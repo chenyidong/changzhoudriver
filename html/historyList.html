@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
+    <title>title</title>
+    <link rel="stylesheet" type="text/css" href="../css/api.css" />
+    <link rel="stylesheet" type="text/css" href="../css/aui.css" />
+    <link rel="stylesheet" type="text/css" href="../css/dropload.css" />
+    <style>
+        html,
+        body {
+            height: 100%;
+            background-color: #f9f9f9;
+        }
+
+        .content-item {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            justify-content: space-between;
+            margin-bottom: 5px
+        }
+
+        .aui-list-item-inner {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .aui-list {
+            margin-top: 5px;
+            padding-top: 5px
+        }
+    </style>
+</head>
+
+<body>
+    <div id="scellContent" style="overflow:auto;">
+        <div class="aui-content aui-margin-b-15 my-search" style="overflow:auto;background-color: #f9f9f9;height:100%">
+            <ul class="aui-list aui-list-in" v-for="history in  historyList">
+                <li class="aui-list-item aui-list-item-middle content">
+                    <div class="aui-list-item-inner">
+                        <div class="content-item" style=" color:#888888;font-size:17px;">
+                            <div style="font-size:14px">设备型号:{{history.phone_type}}</div>
+                            <div style="color:#999999;font-size:13px">操作人:{{history.imei}}</div>
+                        </div>
+                        <div class="content-item" style="color:#999999;font-size:13px">
+                            <div>操作指令:{{history.operate_type}}</div>
+                            <div style="color:#999999;font-size:13px">结果:{{history.operate_result}}</div>
+                        </div>
+                        <div class="content-item" style="color:#999999;font-size:13px">操作时间:{{history.create_date_str }}</div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="dropload-down">
+          <div class="dropload-refresh">上拉加载更多</div>
+          <div style="display:none" class="dropload-load"><span class="loading"></span>正在加载...</div>
+          <div style="display:none" class="dropload-noData">暂无更多数据</div>
+        </div>
+    </div>
+</body>
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript" src="../script/jquery.min.js"></script>
+<script type="text/javascript" src="../script/vue.js"></script>
+<script type="text/javascript" src="../script/server.js"></script>
+<script type="text/javascript">
+    var isTiaojian;
+    var timeValue;
+    apiready = function() {
+        initRefresh();
+        api. addEventListener({name:'scrolltobottom'}, function(ret, err){
+            initRefresh();
+        });
+    }
+    var historyVue = new Vue({
+        el: "#scellContent",
+        data: function() {
+            return {
+                historyList: []
+            }
+        }
+    })
+
+    var page = 0;
+    var pageSize = 10;
+
+    /**
+     * 初始化分页信息
+     */
+    function initRefresh() {
+       $(".dropload-refresh").hide();
+       $(".dropload-noData").hide();
+       $(".dropload-load").show();
+      var jieguo = api.execScript({
+           name: 'historyTop',
+           script: 'getSearchVal("")'
+       });
+       $.ajax({
+          type: 'POST',
+          url: server + '/getOperateLog',
+          data: {
+              page: page,
+              pageSize: pageSize,
+              operateTime: timeValue,//document.getElementById('search-input').value,
+              id:localStorage.getItem("driverId")
+          },
+          dataType: 'json',
+          success: function(data) {
+            $(".dropload-load").hide();
+              if(data.result.data.length>0){
+                page = page + 1;
+              }
+              if (data.result.data.length == 10) {
+                $(".dropload-refresh").show();
+              } else {
+                $(".dropload-noData").show();
+              }
+            historyVue.historyList = historyVue.historyList.concat(data.result.data)
+          },
+          error: function(xhr, type) {
+          }
+      });
+    }
+
+    //日期选择
+    function fnSetBirthday(val) {
+        timeValue=val
+        page = 0;
+        historyVue.historyList = []
+        initRefresh();
+    };
+
+    function cente() {
+        timeValue=''
+        page = 0;
+        historyVue.historyList = []
+        initRefresh();
+    }
+</script>
+
+</html>

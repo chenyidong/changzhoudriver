@@ -1,0 +1,44 @@
+function oneKeyCreateSocket(){
+  onekeySocketManager = api.require('socketManager');
+    onekeySocketManager.createSocket({
+         host: '221.208.158.3',
+         port: 15331
+        // host: '192.168.2.104',
+        // port: 5209
+    }, function(ret, err) {
+      console.log("返回结果:"+JSON.stringify(ret));
+         oneKeySid=ret.sid//socket的sid
+         oneKeySend();
+         if(ret.state==103 ){
+            alert("操作成功!")
+            addHistory("成功");
+         }
+         if(ret.state !=101 && ret.state !=102 &&ret.state !=103){
+             alert("操作失败!")
+             addHistory("失败");
+         }
+         window.setTimeout(function(){
+            oneKeyCloseSocket();
+         },30000);
+    });
+}
+
+
+
+function oneKeyCloseSocket(){
+  onekeySocketManager.closeSocket({
+      sid: oneKeySid
+  }, function(ret, err) {
+      //console.log("停止socket"+JSON.stringify(ret));
+  });
+}
+function oneKeySend(){
+  onekeySocketManager.write({
+        host: '221.208.158.3',
+        port: 15331,
+        sid: oneKeySid,
+        data: '@#yijian#'+id+'#@'
+    }, function(ret, err) {
+        //console.log("send返回结果:"+JSON.stringify(ret));
+    });
+}

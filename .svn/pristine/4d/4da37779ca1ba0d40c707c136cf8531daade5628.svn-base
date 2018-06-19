@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
+    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+    <title>fixedPane</title>
+    <link rel="stylesheet" type="text/css" href="../css/api.css" />
+    <style>
+        html,
+        body {
+            background-color: #dfdede;
+        }
+        
+        li {
+            padding: 3px 10px;
+            border-bottom: 1px solid #d4d3d3;
+        }
+        
+        .liActive {
+            background-color: #3ABA63;
+        }
+        
+        li a {
+            display: block;
+            padding: 10px 30px;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <ul>
+            <li tapmode="liActive"><a class="home">app唯一ID:</a></li>
+            <li tapmode="liActive">
+                <a id="appid"></a>
+            </li>
+        </ul>
+    </nav>
+</body>
+<script type="text/javascript" src="../script/api.js"></script>
+<script>
+    apiready = function() {
+        api.setStatusBarStyle({
+            style: 'dark',
+            color: '#000'
+        });
+        $api.fixStatusBar($api.dom('nav'));
+        document.getElementById("appid").innerHTML = api.deviceId
+    };
+</script>
+
+</html>

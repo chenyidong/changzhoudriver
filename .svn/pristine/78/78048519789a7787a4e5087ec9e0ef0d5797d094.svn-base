@@ -1,0 +1,123 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
+    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+    <title>Hello APP</title>
+    <link rel="stylesheet" type="text/css" href="../css/api.css" />
+    <link rel="stylesheet" type="text/css" href="../css/aui.css" />
+    <link rel="stylesheet" type="text/css" href="../css/dropload.css" />
+    <style type="text/css">
+        html,
+        body {
+            height: 100%;
+            background-color: #f9f9f9;
+            position: fixed;
+        }
+
+        .aui-list-item-inner {
+            color: #777777
+        }
+
+        .aui-list-item>img {
+            width: 12%;
+            height: 12%;
+            margin-right: 5px
+        }
+    </style>
+</head>
+
+<body>
+    <div class="aui-content aui-margin-b-15" id="scellContent" style="overflow:auto;height:99%">
+        <ul class="aui-list aui-list-in" style="overflow:auto;">
+            <li class="aui-list-item" @click="openDiverInfo(driver.ip)" v-for="driver in diverList">
+                <img src="../image/driver.png" />
+                <div class="aui-list-item-inner aui-list-item-arrow">
+                    <div style="color: #777777;font-size:15px">{{driver.devName}}</div>
+                    <div style="color: #999999;font-size:13px">{{driver.ip}}</div>
+                </div>
+            </li>
+        </ul>
+        <div class="dropload-down">
+          <div class="dropload-refresh">上拉加载更多</div>
+          <div style="display:none" class="dropload-load"><span class="loading"></span>正在加载...</div>
+          <div style="display:none" class="dropload-noData">暂无更多数据</div>
+        </div>
+    </div>
+</body>
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript" src="../script/jquery.min.js"></script>
+<script type="text/javascript" src="../script/vue.js"></script>
+<script type="text/javascript" src="../script/server.js"></script>
+<script type="text/javascript">
+    var load;
+    apiready = function() {
+      initRefresh();
+      api. addEventListener({name:'scrolltobottom'}, function(ret, err){
+          //refresh event callback
+          initRefresh();
+      });
+    }
+    var indexVue = new Vue({
+        el: "#scellContent",
+        data: function() {
+            return {
+                diverList: []
+            }
+        },
+        methods:{
+          openDiverInfo:openDiverInfo
+        }
+    })
+    var page = 0;
+    var pageSize = 10;
+    indexVue.diverList = []
+
+    /**
+     * 初始化分页信息
+     */
+    function initRefresh() {
+      $(".dropload-refresh").hide();
+      $(".dropload-noData").hide();
+      $(".dropload-load").show();
+      $.ajax({
+          type: 'POST',
+          url: server + '/getDeviceList',
+          data: {
+              page: page,
+              pageSize: pageSize
+          },
+          dataType: 'json',
+          success: function(data) {
+              $(".dropload-load").hide();
+              if(data.result.data.length>0){
+                page = page + 1;
+              }
+              if (data.result.data.length == 10) {
+                  $(".dropload-refresh").show();
+              } else {
+                  $(".dropload-noData").show();
+              }
+              indexVue.diverList = indexVue.diverList.concat(data.result.data)
+          },
+          error: function(xhr, type) {
+
+          }
+      });
+
+    }
+
+    function openDiverInfo(driverId) {
+        api.openWin({
+            name: 'diverInfo',
+            url: './diverInfo.html',
+            pageParam: {
+                driverId: driverId
+            }
+        });
+    }
+</script>
+
+</html>

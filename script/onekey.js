@@ -1,0 +1,66 @@
+function oneKeyCreateSocket(){
+  onekeySocketManager = api.require('socketManager');
+    onekeySocketManager.createSocket({
+         host: '221.208.158.3',
+         port: 15331
+    }, function(ret, err) {
+        console.log("返回结果:"+JSON.stringify(ret));
+         oneKeySid=ret.sid//socket的sid
+         //改成点击一键操作按钮的时候执行oneKeySend方法
+        // if(ret.state==101){
+        //    oneKeySend();
+        // }
+         if(ret.state==103 ){
+            var onKeyJieguo=ret.data;
+            if(onKeyJieguo.indexOf("true")>=0){
+              alert("操作成功!")
+              addHistory("成功",id);
+            }else if(onKeyJieguo.indexOf("false")>=0){
+              alert("操作失败!")
+              addHistory("失败",id);
+            }else if(onKeyJieguo.indexOf("none")>=0){
+                alert("主机未在线!")
+                addHistory("主机未在线",id);
+            }
+          //  oneKeyCloseSocket();
+         }
+         if(ret.state==201  ){
+           //alert("创建失败!")
+           oneKeyCloseSocket();
+            oneKeyCreateSocket();
+         }
+         if(ret.state==202  ){
+           //alert("连接失败!")
+           oneKeyCloseSocket();
+            oneKeyCreateSocket();
+         }
+         if(ret.state==203){
+           //alert("异常断开!")
+           oneKeyCloseSocket();
+            oneKeyCreateSocket();
+         }
+         if(ret.state==205){
+           //alert("未知错误断开!")
+          oneKeyCloseSocket();
+           oneKeyCreateSocket();
+         }
+    });
+}
+
+
+
+function oneKeyCloseSocket(){
+  onekeySocketManager.closeSocket({
+      sid: oneKeySid
+  }, function(ret, err) {
+
+  });
+}
+function oneKeySend(){
+  onekeySocketManager.write({
+        sid: oneKeySid,
+        data: '@#yijian#'+id+'#@\r\n'
+    }, function(ret, err) {
+
+    });
+}

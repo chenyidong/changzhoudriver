@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
+    <title>title</title>
+    <link rel="stylesheet" type="text/css" href="../css/api.css" />
+    <link rel="stylesheet" type="text/css" href="../css/aui.css" />
+    <style>
+        html,
+        body {
+            height: 100%;
+            background-color: #f9f9f9;
+        }
+
+        .bottom-btn {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+        }
+
+        .dirver-info {
+            border: 1px solid;
+            color: #ffffff;
+            width: 50%;
+            height: 0;
+            padding-bottom: 50%;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="aui-bar aui-bar-nav" id="aui-header" style="height: 60px;background-color:#FF3030">
+        <a class="aui-btn aui-pull-left" tapmode onclick="closeWin()" style="margin-top: 15px;">
+            <span class="aui-iconfont aui-icon-left"></span>
+        </a>
+        <div class="aui-title" style="margin-top: 15px;">设备监控</div>
+    </header>
+    <div class="aui-content aui-margin-b-15">
+        <ul class="aui-list aui-form-list">
+            <li class="aui-list-item">
+                <div class="aui-list-item-inner">
+                    <div class="aui-list-item-label">
+                        监控频率
+                    </div>
+                    <div class="aui-list-item-input">
+                        <select onchange="detectionTime(this)">
+                         <option value="60000">1分钟</option>
+                         <option value="300000">5分钟</option>
+                         <option value="600000">10分钟</option>
+                         <option value="1200000">20分钟</option>
+                         <option value="1800000">30分钟</option>
+                         <option value="3600000">1小时</option>
+                         <option value="43200000">12小时</option>
+                         <option value="86400000">1天</option>
+                     </select>
+                    </div>
+                </div>
+            </li>
+            <li class="aui-list-item" style="padding-left:0rem">
+                <div class="aui-list-item-inner" style="left:0px">
+                    <div class="dirver-info" style="background-color:#8DB6CD;">
+                        <div style="margin-top: 45%;" id="wendu">温度:0℃</div>
+                    </div>
+                    <div class="dirver-info" style="background-color:#CDB38B;">
+                        <div style="margin-top: 45%;" id="yali">压力:0mmhg</div>
+                    </div>
+                </div>
+            </li>
+            <li class="aui-list-item" style="padding-left:0rem">
+                <div class="aui-list-item-inner" style="left:0px">
+                    <div style="width:100%;height:100px;text-align:center;line-height:100px" id="driverState">
+                        设备运行异常
+                    </div>
+                </div>
+            </li>
+            <div class="bottom-btn" style="margin-top:10px">
+                <div class="aui-btn aui-btn-danger" onclick="oneKey()">一键处理</div>
+                <div class="aui-btn aui-btn-warning" onclick="showHistory()">操作记录</div>
+            </div>
+        </ul>
+    </div>
+</body>
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript" src="../script/jquery.min.js"></script>
+<script type="text/javascript" src="../script/onekey.js"></script>
+<script type="text/javascript" src="../script/server.js"></script>
+<script type="text/javascript" src="../script/driverInfo.js"></script>
+<script type="text/javascript">
+    var socketManager;
+    var onekeySocketManager;
+    var dTime = 100; //检测时间间隔
+    var timeInterval;
+    var id;
+    var currentSid;
+    var oneKeySid;
+    apiready = function() {
+        id = api.pageParam.driverId;
+        api.showProgress({
+            style: 'default',
+            animationType: 'fade',
+            text: '正在获取设备信息请稍后...',
+            modal: false
+        });
+        createSocket();
+        oneKeyCreateSocket();
+        setTimeInterval() //开始定时
+
+    };
+
+
+
+
+
+
+
+
+    /*
+     * 一键处理(获取当前设备imei，获取数据库中有的imei，能够使用的imei中存在当前imei值才可操作)
+     */
+    function oneKey() {
+        api.showProgress({
+            style: 'default',
+            animationType: 'fade',
+            text: '正在操作请稍后...',
+            modal: false
+        });
+        var isSubmit = false;
+        $.ajax({
+            type: 'POST',
+            url: server + '/getImeiList',
+            dataType: 'json',
+            async: false,
+            success: function(data) {
+                var imeiList = data.result.data;
+                $.each(imeiList, function(index, item) {
+                    if (item.imei == api.deviceId) {
+                        isSubmit = true;
+                    }
+                })
+            },
+            error: function(xhr, type) {
+
+            }
+        });
+        //if(isSubmit){
+        //oneKeyCreateSocket();
+        oneKeySend();
+        api.hideProgress();
+
+        //}else{
+        //     alert("该设备不在准许范围内!")
+        //  api.hideProgress();
+        //  }
+    }
+
+
+    function addHistory(operateResult) {
+
+        $.ajax({
+            type: 'POST',
+            url: server + '/putDeviceList',
+            data: {
+                imei: api.deviceId,
+                phone_type: api.deviceModel,
+                operate_type: '一键操作',
+                operate_result: operateResult
+            },
+            dataType: 'json',
+            async: false,
+            success: function(data) {
+                console.log(data)
+            },
+            error: function(xhr, type) {
+
+            }
+        });
+    }
+
+    /**
+     * 开始定时时间
+     */
+    function setTimeInterval() {
+        timeInterval = window.setInterval(function() {
+            send();
+        }, dTime);
+    }
+
+    /**
+     * 改变定时时间
+     */
+    function detectionTime(obj) {
+        var ntime = obj.value; //选择的检测时间间隔
+        dTime = ntime;
+        window.clearInterval(timeInterval);
+        setTimeInterval();
+    }
+
+    /**
+     * 显示设备历史信息
+     */
+    function showHistory() {
+        api.openWin({
+            name: 'historyTop',
+            url: './historyTop.html',
+            pageParam: {
+                name: 'test'
+            }
+        });
+    }
+
+
+
+
+
+
+    function closeWin() {
+        closeSocket();
+        api.closeWin({});
+    }
+</script>
+
+</html>
